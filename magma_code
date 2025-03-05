@@ -1,0 +1,59 @@
+list:=SmallGroups([1..300], func<x|not IsNilpotent(x)>);
+
+unknown:=[]; /*list of groups for which (BM) can not be proved via
+Tools $\ref{toolA}$ and $\ref{toolD}$, empty at the start*/
+
+for x in list do
+    isp:=true;
+    
+    /*we first check the supersolvability of x, in which case Tool $\ref{toolD}$
+    may be used*/
+    for h in MaximalSubgroups(x) do
+        h1:=h`subgroup;
+        if (not IsPrime(Index(x,h1))) then
+            isp:=false;
+        end if;
+    end for;
+    
+    /*if x is not supersolvable, we check whether Tool $\ref{toolA}$ may be used*/
+    if not isp then
+        isplit:=false;
+        splitknown:=false;
+        
+        /*we check whether x is a split extension of a group that is
+        already known to verify (BM), by an abelian group*/
+        for y in NormalSubgroups(x) do
+            y1:=y`subgroup;
+            if (IsAbelian(y1) and Order(y1) ge 2) then
+                m:=Index(x,y1);
+                for H in Subgroups(x:OrderEqual:=m) do
+                    H1:=H`subgroup;
+                    int:=H1 meet y1;
+                    if Order(int) eq 1 then
+                        isplit:=true;
+                        idq:=IdentifyGroup(H1);
+                        if not (idq in unknown) then
+                            splitknown:=true;
+                        end if;
+                    end if;
+                end for;
+            end if;
+        end for;
+        
+        /*if the group is not a split extension by any abelian group,
+        Tool $\ref{toolA}$ can not be used, so we add it to the 'unknown' list*/
+        if (not isplit) then
+            Append(~unknown,IdentifyGroup(x));
+        end if;
+        
+        /*if the group is a split extension by an abelian group, of a
+        group for which (BM) is unknown, we also add it to the 'unknown'
+        list*/ 
+        if isplit and (not splitknown) then
+            Append(~unknown,IdentifyGroup(x));
+        end if;
+    end if;
+    
+end for;
+
+unknown;
